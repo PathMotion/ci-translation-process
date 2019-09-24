@@ -1,0 +1,16 @@
+{
+    "name": "pathmotion/ci-translation-process",
+    "description": "Handle translation process for the CI",
+    "autoload": {
+        "psr-4": {
+            "PathMotion\\CI\\": "src/"
+        }
+    },
+    "require": {
+        "symfony/console": "^4.3"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.3",
+        "wimg/php-compatibility": "^8.1"
+    }
+}
