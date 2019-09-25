@@ -2,6 +2,7 @@
 
 namespace PathMotion\CI\Command;
 
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -29,6 +30,30 @@ abstract class AbstractCommand extends Command
     abstract public function runCommandLogic(InputInterface $input);
 
     /**
+     * Option validation
+     * @throws RuntimeException
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return void
+     */
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $this->setInput($input)->setOutput($output);
+        $options = $this->getDefinition()->getOptions();
+
+        foreach ($options as $value) {
+            if (!$value->isValueRequired()) {
+                continue ;
+            }
+            $optionName = $value->getName();
+            if ($input->getOption($optionName) === null) {
+                $errorMessage = 'The "--%s" option is required.';
+                throw new RuntimeException(sprintf($errorMessage, $optionName));
+            }
+        }
+    }
+
+    /**
      * Store input output instance object
      * And call the run method
      *
@@ -38,9 +63,7 @@ abstract class AbstractCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->setInput($input)
-            ->setOutput($output)
-            ->runCommandLogic($input);
+        $this->runCommandLogic($input);
     }
 
     /**

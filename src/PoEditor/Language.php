@@ -157,24 +157,4 @@ class Language
         fclose($file);
         return $meta['uri'];
     }
-
-    /**
-     * Export translation to a `PO` file
-     * @param string $outputFilePath
-     * @return string return output file path
-     */
-    public function exportToPo(string $outputFilePath): string
-    {
-        return $this->exportTo('po', $outputFilePath);
-    }
-
-    /**
-     * Export translation to a `MO` file
-     * @param string $outputFilePath
-     * @return string return output file path
-     */
-    public function exportToMo(string $outputFilePath): string
-    {
-        return $this->exportTo('mo', $outputFilePath);
-    }
 }
