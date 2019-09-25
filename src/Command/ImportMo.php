@@ -1,16 +1,16 @@
 <?php
 namespace PathMotion\CI\Command;
 
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use LogicException;
 use PathMotion\CI\PoEditor\Client as PoEditorClient;
 use PathMotion\CI\PoEditor\Exception\ApiErrorException;
 use PathMotion\CI\PoEditor\Exception\IOException;
 use PathMotion\CI\PoEditor\Exception\UnexpectedBodyResponseException;
-use Symfony\Component\Console\Command\Command;
+use PathMotion\CI\PoEditor\Project;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputInterface;
 
-class ImportMo extends Command
+class ImportMo extends AbstractCommand
 {
     protected static $defaultName = 'import-mo';
 
@@ -21,6 +21,12 @@ class ImportMo extends Command
     const _OPTION_PROJECT_ID_ = 'project-id';
 
     const _DEFAULT_API_KEY_ENV_ = 'PO_EDITOR_API_KEY';
+
+    /**
+     * Po Editor Client
+     * @var PoEditorClient|null
+     */
+    private $poEditorClient = null;
 
     protected function configure()
     {
@@ -44,57 +50,31 @@ class ImportMo extends Command
             );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    /**
+     * Command logic
+     *
+     * @param InputInterface $input
+     * @return void
+     */
+    public function runCommandLogic(InputInterface $input)
     {
         $apiKeyEnv = $input->getOption(self::_OPTION_API_KEY_ENV_);
         $apiKey = getenv($apiKeyEnv);
 
         if (!is_string($apiKey)) {
-            $output->writeln(sprintf('<error>Environment variable `%s` not found</error>', $apiKeyEnv));
-            exit(1);
+            return $this->fatalError(sprintf('Environment variable `%s` not found', $apiKeyEnv));
         }
-        $poEditorClient = new PoEditorClient($apiKey);
+        $this->initPoEditorClient($apiKey);
 
-        try {
-            $projectId = (int)$input->getOption(self::_OPTION_PROJECT_ID_);
-            $project = $poEditorClient->getProject($projectId);
-        } catch (ApiErrorException $error) {
-            $errorMsg = '<error>Cannot retrieve project %d, unexpected PoEditor response (status code %d)</error>';
-            $output->writeln(sprintf($errorMsg, $projectId, $error->getCode()));
-            exit(1);
-        } catch (UnexpectedBodyResponseException $_) {
-            $errorMsg = '<error>Cannot retrieve project %d, Mal formated PoEditor response</error>';
-            $output->writeln(sprintf($errorMsg, $projectId));
-            exit(1);
-        }
-        $output->writeln(
-            sprintf('Project `%s`(%d) has been correctly retrieve', $project->getName(), $projectId),
-            OutputInterface::VERBOSITY_VERBOSE
-        );
-        $languages = [];
-        try {
-            $languages = $project->languagesList();
-        } catch (ApiErrorException $error) {
-            $errorMsg = '<error>Cannot retrieve language list, unexpected PoEditor response (status code %d)</error>';
-            $output->writeln(sprintf($errorMsg, $error->getCode()));
-            exit(1);
-        } catch (UnexpectedBodyResponseException $_) {
-            $errorMsg = '<error>Cannot retrieve language list, Mal formated PoEditor response</error>';
-            $output->writeln($errorMsg);
-            exit(1);
-        }
+        // Project
+        $projectId= (int)$input->getOption(self::_OPTION_PROJECT_ID_);
+        $project = $this->retrieveProject($projectId);
+        $this->verboseLn(sprintf('Project `%s`(%d) has been correctly retrieve', $project->getName(), $projectId));
 
-        $countLanguages = count($languages);
-        if ($countLanguages === 0) {
-            $errorMsg = '<comment>0 languages found in project %d</comment>';
-            $output->writeln(sprintf($errorMsg, $projectId));
-            exit(0);
-        } else {
-            $output->writeln(
-                sprintf('%d languages has been correctly retrieve.', $countLanguages),
-                OutputInterface::VERBOSITY_VERBOSE
-            );
-        }
+        // Languages
+        $languages = $this->retrieveLanguages($project);
+
+        // Importation
         foreach ($languages as $language) {
             $code = mb_strtolower($language->formatCode());
             $outputFile = $input->getOption(self::_OPTION_OUTPUT_DIR_);
@@ -103,25 +83,80 @@ class ImportMo extends Command
             try {
                 $language->exportToMo($outputFile);
             } catch (IOException $_) {
-                $errorMsg = '<error>Cannot export mo file to %s</error>';
-                $output->writeln(sprintf($errorMsg, $outputFile));
-                exit(1);
+                return $this->fatalError(sprintf('Cannot export mo file to %s', $outputFile));
             } catch (ApiErrorException $error) {
-                $errorMsg = '<error>Cannot export mo file to %s, unexpected PoEditor response (status code %d)</error>';
-                $output->writeln(sprintf($errorMsg, $outputFile, $error->getCode()));
-                exit(1);
+                return $this->fatalError(sprintf('Cannot export mo file to %s, unexpected PoEditor response (status code %d)', $outputFile, $error->getCode()));
             } catch (UnexpectedBodyResponseException $_) {
-                $errorMsg = '<error>Cannot export mo file to %s, Mal formated PoEditor response</error>';
-                $output->writeln(sprintf($errorMsg, $outputFile));
-                exit(1);
+                return $this->fatalError(sprintf('Cannot export mo file to %s, Mal formated PoEditor response', $outputFile));
             }
-            $output->writeln(
-                sprintf(
-                    '<info>`%s` file has been successfully imported at `%s`</info>',
-                    $code,
-                    $outputFile
-                )
-            );
+            $this->writeln(sprintf('`%s` file has been successfully imported at `%s`', $code, $outputFile), 'info');
         }
+    }
+
+    /**
+     * Initialize Po Editor client
+     * @param string $apiKey
+     * @return self
+     */
+    private function initPoEditorClient(string $apiKey): self
+    {
+        $this->poEditorClient = new PoEditorClient($apiKey);
+        return $this;
+    }
+
+    /**
+     * Get po Editor client instance
+     * @throws LogicException
+     * @return PoEditorClient
+     */
+    private function getPoEditorClient(): PoEditorClient
+    {
+        if (!isset($this->poEditorClient)) {
+            throw new LogicException('Po Editor client must be initialize');
+        }
+        return $this->poEditorClient;
+    }
+
+    /**
+     * Retrieve po editor project information
+     * @param integer $projectId
+     * @return Project
+     */
+    private function retrieveProject(int $projectId): Project
+    {
+        try {
+            $project = $this->getPoEditorClient()->getProject($projectId);
+        } catch (ApiErrorException $error) {
+            $errorMsg = 'Cannot retrieve project %d, unexpected PoEditor response (status code %d)';
+            return $this->fatalError(sprintf($errorMsg, $projectId, $error->getCode()));
+        } catch (UnexpectedBodyResponseException $_) {
+            $errorMsg = 'Cannot retrieve project %d, Mal formated PoEditor API response';
+            return $this->fatalError(sprintf($errorMsg, $projectId));
+        }
+        return $project;
+    }
+
+    /**
+     * Retrieve po editor project languages
+     * @param Project $project
+     * @return array <Language>
+     */
+    private function retrieveLanguages(Project $project)
+    {
+        $languages = [];
+        try {
+            $languages = $project->languagesList();
+        } catch (ApiErrorException $error) {
+            return $this->fatalError(sprintf('Cannot retrieve language list, unexpected PoEditor response (status code %d)', $error->getCode()));
+        } catch (UnexpectedBodyResponseException $_) {
+            return $this->fatalError('Cannot retrieve language list, Mal formated PoEditor API response');
+        }
+        $countLanguages = count($languages);
+        if ($countLanguages === 0) {
+            $this->writeln(sprintf('0 languages found in project %d', $project->getId()), 'comment');
+        } else {
+            $this->verboseLn(sprintf('%d languages has been correctly retrieve.', $countLanguages));
+        }
+        return $languages;
     }
 }

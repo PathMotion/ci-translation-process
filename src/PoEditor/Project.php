@@ -70,6 +70,15 @@ class Project
     }
 
     /**
+     * Get project id
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    /**
      * Perform manual request to the PO editor API
      * With the project id automaticly injected to the request
      * @param string $endpoint
