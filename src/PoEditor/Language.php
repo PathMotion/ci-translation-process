@@ -62,9 +62,10 @@ class Language
 
     /**
      * Format language code
+     * @param string $separator
      * @return string
      */
-    public function formatCode(): string
+    public function formatCode(string $separator = '-'): string
     {
         if (preg_match('/^([a-zA-Z]+)-([a-zA-Z]+)$/', $this->code, $matches) === 1) {
             $language = $matches[1];
@@ -73,7 +74,7 @@ class Language
             $language = mb_strtolower($this->code);
             $region = mb_strtoupper($this->code);
         }
-        return sprintf('%s-%s', $language, $region);
+        return sprintf('%s%s%s', $language, $separator, $region);
     }
 
     /**

@@ -4,6 +4,9 @@ namespace PathMotion\CI\Command;
 
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableCell;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -51,6 +54,23 @@ abstract class AbstractCommand extends Command
                 throw new RuntimeException(sprintf($errorMessage, $optionName));
             }
         }
+    }
+
+    /**
+     * Get inpur informations for debug purpose
+     * @return array
+     */
+    protected function debugInput(): array
+    {
+        $options = $this->getInput()->getOptions();
+        $args = $this->getInput()->getArguments();
+        $env = getenv();
+
+        return [
+            'arguments' => $args,
+            'options' => $options,
+            'env' => $env
+        ];
     }
 
     /**
@@ -127,7 +147,38 @@ abstract class AbstractCommand extends Command
     public function fatalError(string $errorMessage)
     {
         $this->writeln($errorMessage, 'error');
+        $this->outputDebug();
         exit(1);
+    }
+
+    /**
+     * Output debug information in a table
+     * @return void
+     */
+    protected function outputDebug()
+    {
+        $data = $this->debugInput();
+        $tableRows = [];
+        foreach($data as $type => $rows) {
+            if (count($tableRows) > 0) {
+                $tableRows[] = new TableSeparator();
+            }
+            $tableRows[] = [new TableCell($type, ['colspan' => 2])];
+            $tableRows[] = new TableSeparator();
+            foreach ($rows as $key => $value) {
+                $tableRows[] = [$key, var_export($value, true)];
+            }
+        }
+        $output = $this->getOutput();
+        $previousVerbosity = $output->getVerbosity();
+        $output->setVerbosity(OutputInterface::VERBOSITY_VERY_VERBOSE);
+        $table = new Table($output);
+        $table
+            ->setHeaders(['Key', 'Value'])
+            ->setRows($tableRows);
+
+        $table->render();
+        $output->setVerbosity($previousVerbosity);
     }
 
     /**

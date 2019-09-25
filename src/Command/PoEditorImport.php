@@ -154,10 +154,43 @@ class PoEditorImport extends AbstractCommand
         $apiKeyEnv = $input->getOption(self::_OPTION_API_KEY_ENV_);
         $apiKey = getenv($apiKeyEnv);
 
-        if (!is_string($apiKey)) {
+        if (!is_string($apiKey) || empty($apiKey)) {
             return $this->fatalError(sprintf('Environment variable `%s` not found', $apiKeyEnv));
         }
         $this->initPoEditorClient($apiKey);
+    }
+
+    /**
+     * Add and offend secret informations
+     * @return array
+     */
+    protected function debugInput(): array
+    {
+        $inputValues = parent::debugInput();
+
+        $apiKeyEnv = $this->getInput()->getOption(self::_OPTION_API_KEY_ENV_);
+        $apiKey = getenv($apiKeyEnv);
+
+        if (!is_string($apiKey) || empty($apiKey)) {
+            return $inputValues;
+        }
+        $apiKey = trim($apiKey);
+        if (empty($apiKey)) {
+            $inputValues['env'][$apiKeyEnv] = '-- EMPTY STRING --';
+            return $inputValues;
+        }
+        $keyLen = strlen($apiKey);
+        $visibleLen = 4;
+        if ($keyLen === 1) {
+            $inputValues['env'][$apiKeyEnv] = '*';
+            return $inputValues;
+        } else if ($keyLen <= $visibleLen) {
+            $visibleLen = 1;
+        }
+        $apiKey = str_repeat('*', $keyLen - $visibleLen) . substr($apiKey, -1 * $visibleLen);
+        $inputValues['env'][$apiKeyEnv] = $apiKey;
+        return $inputValues;
+        return [];
     }
 
     /**
@@ -182,9 +215,14 @@ class PoEditorImport extends AbstractCommand
         }
     }
 
+    /**
+     * Import file into the file system
+     * @param Language $language
+     * @return void
+     */
     private function importFile(Language $language)
     {
-        $code = mb_strtolower($language->formatCode());
+        $code = mb_strtolower($language->formatCode('_'));
         $fileType = $this->getInput()->getOption(self::_OPTION_FILE_TYPE_);
         $outputFile = $this->getInput()->getOption(self::_OPTION_DESTINATION_);
         $outputFile .= sprintf('/%s/LC_MESSAGES/default.%s', $code, $fileType);
