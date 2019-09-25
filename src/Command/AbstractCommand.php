@@ -136,7 +136,8 @@ abstract class AbstractCommand extends Command
      *
      * @param string  $message
      * @param string  $style
-     * @param integer $options  A bitmask of options (one of the OUTPUT or VERBOSITY constants), 0 is considered the same as OutputInterface::OUTPUT_NORMAL | OutputInterface::VERBOSITY_NORMAL
+     * @param integer $options  A bitmask of options (one of the OUTPUT or VERBOSITY constants),
+     * 0 is considered the same as OutputInterface::OUTPUT_NORMAL | OutputInterface::VERBOSITY_NORMAL
      * @return void
      */
     public function writeln(string $message, string $style = null, int $options = 0)

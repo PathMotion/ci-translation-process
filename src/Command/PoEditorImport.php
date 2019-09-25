@@ -92,7 +92,7 @@ class PoEditorImport extends AbstractCommand
      */
     protected function configure()
     {
-        $this->setDescription('Import MO from PoEditor.com account.');
+        $this->setDescription('Import translation files from PoEditor.com account.');
 
         $this->addOption(
             self::_OPTION_DESTINATION_,
@@ -136,17 +136,21 @@ class PoEditorImport extends AbstractCommand
     {
         parent::initialize($input, $output);
 
+        // File type check
         $fileType = mb_strtolower($input->getOption(self::_OPTION_FILE_TYPE_));
         $input->setOption(self::_OPTION_FILE_TYPE_, $fileType);
+
         if (!in_array($fileType, self::_ALLOWED_OPTION_FILE_TYPE_)) {
             $errorMsg = 'The "--%s" option got "%s" only "%s" are allowed.';
             throw new RuntimeException(sprintf(
                 $errorMsg,
                 self::_OPTION_FILE_TYPE_,
-                $fileType, implode('", "', self::_ALLOWED_OPTION_FILE_TYPE_)
+                $fileType,
+                implode('", "', self::_ALLOWED_OPTION_FILE_TYPE_)
             ));
         }
 
+        // Api Key initialization
         $apiKeyEnv = $input->getOption(self::_OPTION_API_KEY_ENV_);
         $apiKey = getenv($apiKeyEnv);
 
@@ -190,9 +194,16 @@ class PoEditorImport extends AbstractCommand
         } catch (IOException $_) {
             return $this->fatalError(sprintf('Cannot export mo file to %s', $outputFile));
         } catch (ApiErrorException $error) {
-            return $this->fatalError(sprintf('Cannot export mo file to %s, unexpected PoEditor response (status code %d)', $outputFile, $error->getCode()));
+            return $this->fatalError(sprintf(
+                'Cannot export mo file to %s, unexpected PoEditor response (status code %d)',
+                $outputFile,
+                $error->getCode()
+            ));
         } catch (UnexpectedBodyResponseException $_) {
-            return $this->fatalError(sprintf('Cannot export mo file to %s, Mal formated PoEditor response', $outputFile));
+            return $this->fatalError(sprintf(
+                'Cannot export mo file to %s, Mal formated PoEditor response',
+                $outputFile
+            ));
         }
         $this->writeln(sprintf('`%s` file has been successfully imported at `%s`', $code, $outputFile), 'info');
     }
@@ -251,7 +262,10 @@ class PoEditorImport extends AbstractCommand
         try {
             $languages = $project->languagesList();
         } catch (ApiErrorException $error) {
-            return $this->fatalError(sprintf('Cannot retrieve language list, unexpected PoEditor response (status code %d)', $error->getCode()));
+            return $this->fatalError(sprintf(
+                'Cannot retrieve language list, unexpected PoEditor response (status code %d)',
+                $error->getCode()
+            ));
         } catch (UnexpectedBodyResponseException $_) {
             return $this->fatalError('Cannot retrieve language list, Mal formated PoEditor API response');
         }
