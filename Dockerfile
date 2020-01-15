@@ -1,4 +1,4 @@
-FROM php:7.3-alpine3.9
+FROM php:7.3-stretch
 
 
 RUN curl -sS https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer && composer global require hirak/prestissimo --no-plugins --no-scripts
