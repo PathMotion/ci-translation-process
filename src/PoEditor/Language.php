@@ -4,6 +4,7 @@ namespace PathMotion\CI\PoEditor;
 use PathMotion\CI\PoEditor\Exception\ApiErrorException;
 use PathMotion\CI\PoEditor\Exception\IOException;
 use PathMotion\CI\PoEditor\Exception\UnexpectedBodyResponseException;
+use PathMotion\CI\Utils\TranslationFile;
 use stdClass;
 
 class Language
@@ -22,7 +23,7 @@ class Language
     private $code;
 
     /**
-     * Translation cound
+     * Translation count
      * @var int
      */
     private $translationsCount;
@@ -136,9 +137,9 @@ class Language
      * @throws UnexpectedBodyResponseException
      * @param string $type file type (po/mo)
      * @param string $outputFilePath
-     * @return string return output file path
+     * @return TranslationFile return output file
      */
-    public function exportTo(string $type, string $outputFilePath): string
+    public function exportTo(string $type, string $outputFilePath): TranslationFile
     {
         $file = $this->createIfNeededAndOpenFile($outputFilePath);
         try {
@@ -156,6 +157,7 @@ class Language
         curl_close($curl);
         $meta = stream_get_meta_data($file);
         fclose($file);
-        return $meta['uri'];
+
+        return new TranslationFile($meta['uri']);
     }
 }

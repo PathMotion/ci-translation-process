@@ -12,6 +12,8 @@ use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
+use PathMotion\CI\Utils\TranslationFile;
+use Symfony\Component\Console\Input\InputArgument;
 
 class PoEditorImport extends AbstractCommand
 {
@@ -72,6 +74,19 @@ class PoEditorImport extends AbstractCommand
      */
     const _DEFAULT_FILE_TYPE_ = 'mo';
 
+    /**
+     * Long command line option for the name of
+     * the environment variable, that contains the API key.
+     * @var string
+     */
+    const _OPTION_CONTEXT_ = 'context';
+
+    /**
+     * Short command line option for imported file type
+     * @var string
+     */
+    const _SHORT_OPTION_CONTEXT_ = 'c';
+
     const _ALLOWED_OPTION_FILE_TYPE_ = [
         'po', 'pot', 'mo', 'xls', 'xlsx', 'csv',
         'ini', 'resw', 'resx', 'android_strings',
@@ -105,7 +120,7 @@ class PoEditorImport extends AbstractCommand
             self::_OPTION_API_KEY_ENV_,
             null,
             InputOption::VALUE_REQUIRED,
-            'Name of the environment variable, that contains the Poeditor API key.',
+            'Name of the environment variable, that contains the PoEditor API key.',
             self::_DEFAULT_VALUE_API_KEY_ENV_
         );
 
@@ -113,7 +128,7 @@ class PoEditorImport extends AbstractCommand
             self::_OPTION_PROJECT_,
             self::_SHORT_OPTION_PROJECT_,
             InputOption::VALUE_REQUIRED,
-            'Po editor project identifiant'
+            'Po editor project identifiers'
         );
 
         $this->addOption(
@@ -122,6 +137,13 @@ class PoEditorImport extends AbstractCommand
             InputOption::VALUE_REQUIRED,
             'Imported file type',
             self::_DEFAULT_FILE_TYPE_
+        );
+
+        $this->addOption(
+            self::_OPTION_CONTEXT_,
+            self::_SHORT_OPTION_CONTEXT_,
+            InputOption::VALUE_NONE,
+            'split context into several file'
         );
     }
 
@@ -161,7 +183,7 @@ class PoEditorImport extends AbstractCommand
     }
 
     /**
-     * Add and offend secret informations
+     * Add and offend secret information
      * @return array
      */
     protected function debugInput(): array
@@ -211,24 +233,30 @@ class PoEditorImport extends AbstractCommand
 
         // Importation
         foreach ($languages as $language) {
-            $this->importFile($language);
+            $this->importFile($language, $input->getOption(self::_OPTION_CONTEXT_));
         }
     }
 
     /**
      * Import file into the file system
      * @param Language $language
-     * @return void
+     * @param bool $extractContrext
+     * @return TranslationFile
      */
-    private function importFile(Language $language)
+    private function importFile(Language $language, bool $extractContext): TranslationFile
     {
         $code = mb_strtolower($language->formatCode('_'));
         $fileType = $this->getInput()->getOption(self::_OPTION_FILE_TYPE_);
         $outputFile = $this->getInput()->getOption(self::_OPTION_DESTINATION_);
         $outputFile .= sprintf('/%s/LC_MESSAGES/default.%s', $code, $fileType);
+        $contextFiles = [];
 
         try {
-            $language->exportTo($fileType, $outputFile);
+            $translationFile = $language->exportTo($fileType, $outputFile);
+
+            if ($extractContext) {
+                $contextFiles = $translationFile->extractContext();
+            }
         } catch (IOException $_) {
             return $this->fatalError(sprintf('Cannot export mo file to %s', $outputFile));
         } catch (ApiErrorException $error) {
@@ -239,11 +267,21 @@ class PoEditorImport extends AbstractCommand
             ));
         } catch (UnexpectedBodyResponseException $_) {
             return $this->fatalError(sprintf(
-                'Cannot export mo file to %s, Mal formated PoEditor response',
+                'Cannot export mo file to %s, unexpected PoEditor response',
                 $outputFile
             ));
         }
         $this->writeln(sprintf('`%s` file has been successfully imported at `%s`', $code, $outputFile), 'info');
+        if ($extractContext === false) {
+            return $translationFile;
+        }
+        if (count($contextFiles) === 0) {
+            $this->writeln(sprintf('There is no context otherwise than `default`', $code, $outputFile), 'info');
+        }
+        foreach ($contextFiles as $filePath) {
+            $this->writeln(sprintf('Context file has been successfully imported at `%s`', $filePath), 'info');
+        }
+        return $translationFile;
     }
 
     /**
@@ -283,7 +321,7 @@ class PoEditorImport extends AbstractCommand
             $errorMsg = 'Cannot retrieve project %d, unexpected PoEditor response (status code %d)';
             return $this->fatalError(sprintf($errorMsg, $projectId, $error->getCode()));
         } catch (UnexpectedBodyResponseException $_) {
-            $errorMsg = 'Cannot retrieve project %d, Mal formated PoEditor API response';
+            $errorMsg = 'Cannot retrieve project %d, unexpected PoEditor API response';
             return $this->fatalError(sprintf($errorMsg, $projectId));
         }
         return $project;
@@ -305,7 +343,7 @@ class PoEditorImport extends AbstractCommand
                 $error->getCode()
             ));
         } catch (UnexpectedBodyResponseException $_) {
-            return $this->fatalError('Cannot retrieve language list, Mal formated PoEditor API response');
+            return $this->fatalError('Cannot retrieve language list, unexpected PoEditor API response');
         }
         $countLanguages = count($languages);
         if ($countLanguages === 0) {
