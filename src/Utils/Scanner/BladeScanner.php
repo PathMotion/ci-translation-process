@@ -4,8 +4,10 @@ namespace PathMotion\CI\Utils\Scanner;
 use Gettext\Translations;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Compilers\BladeCompiler;
-use Philo\Blade\Blade;
 
+/**
+ * BladeScanner will parse PHP source code and Blade View template
+ */
 class BladeScanner extends PhpScanner
 {
 

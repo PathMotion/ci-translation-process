@@ -7,9 +7,17 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Identifier;
 
+/**
+ * Will help to extract PHP code
+ */
 class PhpNodeVisitor extends ScannerPhpNodeVisitor
 {
 
+    /**
+     * Enter node override to handle method calls
+     * @param Node $node
+     * @return null
+     */
     public function enterNode(Node $node)
     {
         if ($node instanceof MethodCall) {
@@ -23,6 +31,11 @@ class PhpNodeVisitor extends ScannerPhpNodeVisitor
         return parent::enterNode($node);
     }
 
+    /**
+     * Create method is an adaptation of the createFunction method
+     * @param MethodCall $node
+     * @return ParsedFunction
+     */
     protected function createMethod(MethodCall $node): ParsedFunction
     {
         $function = new ParsedFunction(
@@ -52,5 +65,4 @@ class PhpNodeVisitor extends ScannerPhpNodeVisitor
 
         return $function;
     }
-
 }

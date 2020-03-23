@@ -5,8 +5,16 @@ use Gettext\Scanner\CodeScanner;
 use Gettext\Scanner\FunctionsScannerInterface;
 use Gettext\Translations;
 
+/**
+ * PhpScanner will parse PHP source code
+ */
 class PhpScanner extends CodeScanner
 {
+    /**
+     * Add translation after constructor
+     * @param Translations $translations
+     * @return self
+     */
     public function addTranslations(Translations $translations): self
     {
         $domain = $translations->getDomain();
@@ -14,8 +22,26 @@ class PhpScanner extends CodeScanner
         return $this;
     }
 
+    /**
+     * Get custom `PhpFunctionsScanner` instance
+     * @return FunctionsScannerInterface
+     */
     public function getFunctionsScanner(): FunctionsScannerInterface
     {
         return new PhpFunctionsScanner(array_keys($this->functions));
+    }
+
+    /**
+     * Count all translations
+     * @return integer
+     */
+    public function getTranslationCount(): int
+    {
+        $total = 0;
+
+        foreach ($this->getTranslations() as $domainTranslation) {
+            $total += $domainTranslation->count();
+        }
+        return $total;
     }
 }
