@@ -28,6 +28,10 @@ class PoFile
      */
     protected $translations;
     
+    /**
+     * Comment in unused translation occurence
+     * @var string
+     */
     const DELETION_FLAG_COMMENT = 'this translation occurrence was not found in the code';
 
     public function __construct(Translations $translations, string $path)
