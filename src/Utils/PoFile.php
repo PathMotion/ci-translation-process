@@ -27,6 +27,8 @@ class PoFile
      * @var Translations
      */
     protected $translations;
+    
+    const DELETION_FLAG_COMMENT = 'this translation occurrence was not found in the code';
 
     public function __construct(Translations $translations, string $path)
     {
@@ -169,9 +171,9 @@ class PoFile
             $newTranslation->getExtractedComments()->add($comment);
         }
 
-        $newTranslation->getComments()->delete('This translation occurrence has been didn\'t find in code');
+        $newTranslation->getComments()->delete(self::DELETION_FLAG_COMMENT);
         if ($addComment) {
-            $newTranslation->getComments()->add('This translation occurrence has been didn\'t find in code');
+            $newTranslation->getComments()->add(self::DELETION_FLAG_COMMENT);
         }
         return $newTranslation;
     }
