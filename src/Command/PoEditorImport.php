@@ -276,7 +276,7 @@ class PoEditorImport extends AbstractCommand
             return $translationFile;
         }
         if (count($contextFiles) === 0) {
-            $this->writeln(sprintf('There is no context otherwise than `default`', $code, $outputFile), 'info');
+            $this->writeln('There is no other context than `default`'), 'info');
         }
         foreach ($contextFiles as $filePath) {
             $this->writeln(sprintf('Context file has been successfully imported at `%s`', $filePath), 'info');

@@ -44,10 +44,10 @@ class TranslationFile
         $this->filePath = $filePath;
         $ext = mb_strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
-        if ($ext === "po") {
+        if ($ext === 'po') {
             $this->loader = new PoLoader();
             $this->generator = new PoGenerator();
-        } elseif ($ext === "mo") {
+        } elseif ($ext === 'mo') {
             $this->loader = new MoLoader();
             $this->generator = new MoGenerator();
         }
