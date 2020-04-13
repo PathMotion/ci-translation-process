@@ -10,9 +10,12 @@ use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * AbstractCommand class should extends all command class
+ * It centralize all common command logic and workflow
+ */
 abstract class AbstractCommand extends Command
 {
-
     /**
      * Command input
      * @var InputInterface
@@ -57,7 +60,7 @@ abstract class AbstractCommand extends Command
     }
 
     /**
-     * Get inpur informations for debug purpose
+     * Get input information for debug purpose
      * @return array
      */
     protected function debugInput(): array
@@ -76,7 +79,6 @@ abstract class AbstractCommand extends Command
     /**
      * Store input output instance object
      * And call the run method
-     *
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return void
@@ -128,7 +130,6 @@ abstract class AbstractCommand extends Command
 
     /**
      * Use command output to write a verbose message and adds a newline at the end.
-     *
      * @param string $message
      * @param string  $style
      * @return void
@@ -187,7 +188,7 @@ abstract class AbstractCommand extends Command
      *
      * @param string  $message
      * @param string  $style
-     * @param integer $options  A bitmask of options (one of the OUTPUT or VERBOSITY constants),
+     * @param integer $options  A bit mask of options (one of the OUTPUT or VERBOSITY constants),
      * 0 is considered the same as OutputInterface::OUTPUT_NORMAL | OutputInterface::VERBOSITY_NORMAL
      * @return void
      */

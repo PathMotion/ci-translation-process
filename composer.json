@@ -8,7 +8,9 @@
     },
     "require": {
         "symfony/console": "^4.3",
-        "gettext/gettext": "^5.4"
+        "gettext/gettext": "^5.4",
+        "gettext/php-scanner": "^1.1",
+        "philo/laravel-blade": "3.*"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.3",
