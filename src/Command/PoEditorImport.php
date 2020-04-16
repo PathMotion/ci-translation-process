@@ -69,6 +69,42 @@ class PoEditorImport extends AbstractCommand
     const _SHORT_OPTION_FILE_TYPE_ = 't';
 
     /**
+     * Long command line option for file output
+     * @var string
+     */
+    const _OPTION_OUTPUT_MASK_ = 'mask';
+
+    /**
+     * Short command line option for file output
+     * @var string
+     */
+    const _SHORT_OPTION_OUTPUT_MASK_ = 'm';
+
+    /**
+     * Long command line option for file output
+     * @var string
+     */
+    const _OPTION_IETF_TAG_ = 'code';
+
+    /**
+     * Short command line option for file output
+     * @var string
+     */
+    const _SHORT_OPTION_IETF_TAG_ = 'c';
+
+    /**
+     * Default value of command line option self::_OPTION_FILE_NAME_CODE_
+     * @var string
+     */
+    const _DEFAULT_FILE_NAME_CODE_ = 'POSIX';
+
+    /**
+     * Default value of command line option self::_OPTION_OUTPUT_MASK_
+     * @var string
+     */
+    const _DEFAULT_OUTPUT_MASK_ = '/%s/LC_MESSAGES/default';
+
+    /**
      * Default value of command line option self::_OPTION_FILE_TYPE_
      * @var string
      */
@@ -87,12 +123,30 @@ class PoEditorImport extends AbstractCommand
      */
     const _SHORT_OPTION_CONTEXT_ = 'c';
 
+    const _ALLOWED_FILE_NAME_CODE_ = [
+        'posix' => Language::FORMAT_POSIX,
+        'iso_639_1' => Language::FORMAT_ISO_639_1
+    ];
+
     const _ALLOWED_OPTION_FILE_TYPE_ = [
-        'po', 'pot', 'mo', 'xls', 'xlsx', 'csv',
-        'ini', 'resw', 'resx', 'android_strings',
-        'apple_strings', 'xliff', 'properties',
-        'key_value_json', 'json', 'yml', 'xmb',
-        'xtb'
+        'po' => 'po',
+        'pot' => 'pot',
+        'mo' => 'mo',
+        'xls' => 'xls',
+        'xlsx' => 'xlsx',
+        'csv' => 'csv',
+        'ini' => 'ini',
+        'resw' => 'resw', //Windows
+        'resx' => 'resx', // Windows
+        'android_strings' => 'xml', // Android
+        'apple_strings' => 'strings', // iOS
+        'xliff' => 'xliff', // iOS
+        'properties' => 'properties', // Java
+        'key_value_json' => 'json',
+        'json' => 'json',
+        'yml' => 'yml',
+        'xmb' => 'xmb',
+        'xtb' => 'xtb'
     ];
 
     /**
@@ -145,6 +199,23 @@ class PoEditorImport extends AbstractCommand
             InputOption::VALUE_NONE,
             'split context into several file'
         );
+
+        // IETF format
+        $this->addOption(
+            self::_OPTION_OUTPUT_MASK_,
+            self::_SHORT_OPTION_OUTPUT_MASK_,
+            InputOption::VALUE_REQUIRED,
+            'Output file mask',
+            self::_DEFAULT_OUTPUT_MASK_
+        );
+
+        $this->addOption(
+            self::_OPTION_IETF_TAG_,
+            self::_SHORT_OPTION_IETF_TAG_,
+            InputOption::VALUE_REQUIRED,
+            'Language code format (IETF tag lang)',
+            self::_DEFAULT_FILE_NAME_CODE_
+        );
     }
 
     /**
@@ -162,15 +233,29 @@ class PoEditorImport extends AbstractCommand
         $fileType = mb_strtolower($input->getOption(self::_OPTION_FILE_TYPE_));
         $input->setOption(self::_OPTION_FILE_TYPE_, $fileType);
 
-        if (!in_array($fileType, self::_ALLOWED_OPTION_FILE_TYPE_)) {
+        if (!isset(self::_ALLOWED_OPTION_FILE_TYPE_[$fileType])) {
             $errorMsg = 'The "--%s" option got "%s" only "%s" are allowed.';
             throw new RuntimeException(sprintf(
                 $errorMsg,
                 self::_OPTION_FILE_TYPE_,
                 $fileType,
-                implode('", "', self::_ALLOWED_OPTION_FILE_TYPE_)
+                implode('", "', array_keys(self::_ALLOWED_OPTION_FILE_TYPE_))
             ));
         }
+
+        // Check language code format
+        $languageCodeFormat = mb_strtolower($input->getOption(self::_OPTION_IETF_TAG_));
+
+        if (!isset(self::_ALLOWED_FILE_NAME_CODE_[$languageCodeFormat])) {
+            $errorMsg = 'The "--%s" option got "%s" only "%s" are allowed.';
+            throw new RuntimeException(sprintf(
+                $errorMsg,
+                self::_OPTION_IETF_TAG_,
+                $languageCodeFormat,
+                implode('", "', array_keys(self::_ALLOWED_FILE_NAME_CODE_))
+            ));
+        }
+        $input->setOption(self::_OPTION_IETF_TAG_, self::_ALLOWED_FILE_NAME_CODE_[$languageCodeFormat]);
 
         // Api Key initialization
         $apiKeyEnv = $input->getOption(self::_OPTION_API_KEY_ENV_);
@@ -245,10 +330,12 @@ class PoEditorImport extends AbstractCommand
      */
     private function importFile(Language $language, bool $extractContext): TranslationFile
     {
-        $code = mb_strtolower($language->formatCode('_'));
+        $languageCodeFormat = $this->getInput()->getOption(self::_OPTION_IETF_TAG_);
+        $code = mb_strtolower($language->formatCode($languageCodeFormat));
         $fileType = $this->getInput()->getOption(self::_OPTION_FILE_TYPE_);
         $outputFile = $this->getInput()->getOption(self::_OPTION_DESTINATION_);
-        $outputFile .= sprintf('/%s/LC_MESSAGES/default.%s', $code, $fileType);
+        $outputMask = $this->getInput()->getOption(self::_OPTION_OUTPUT_MASK_);
+        $outputFile .= sprintf($outputMask . '.%s', $code, self::_ALLOWED_OPTION_FILE_TYPE_[$fileType]);
         $contextFiles = [];
 
         try {
