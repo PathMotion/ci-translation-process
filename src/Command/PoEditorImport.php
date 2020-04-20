@@ -142,8 +142,9 @@ class PoEditorImport extends AbstractCommand
         $this->addOption(
             self::_OPTION_CONTEXT_,
             self::_SHORT_OPTION_CONTEXT_,
-            InputOption::VALUE_NONE,
-            'split context into several file'
+            InputOption::VALUE_OPTIONAL,
+            'split context into several file',
+            false
         );
     }
 
@@ -157,6 +158,13 @@ class PoEditorImport extends AbstractCommand
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         parent::initialize($input, $output);
+
+        $context = true;
+        $inputContext = $input->getOption(self::_OPTION_CONTEXT_);
+        if (trim($inputContext) === 'false' || trim($inputContext) === '0' || $inputContext === false) {
+            $context = false;
+        }
+        $input->setOption(self::_OPTION_CONTEXT_, $context);
 
         // File type check
         $fileType = mb_strtolower($input->getOption(self::_OPTION_FILE_TYPE_));
@@ -224,7 +232,7 @@ class PoEditorImport extends AbstractCommand
     public function runCommandLogic(InputInterface $input)
     {
         // Project
-        $projectId= (int)$input->getOption(self::_OPTION_PROJECT_);
+        $projectId = (int)$input->getOption(self::_OPTION_PROJECT_);
         $project = $this->retrieveProject($projectId);
         $this->verboseLn(sprintf('Project `%s`(%d) has been correctly retrieve', $project->getName(), $projectId));
 
