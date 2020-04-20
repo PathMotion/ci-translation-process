@@ -331,7 +331,7 @@ class PoEditorImport extends AbstractCommand
     private function importFile(Language $language, bool $extractContext): TranslationFile
     {
         $languageCodeFormat = $this->getInput()->getOption(self::_OPTION_IETF_TAG_);
-        $code = mb_strtolower($language->formatCode($languageCodeFormat));
+        $code = $language->formatCode($languageCodeFormat);
         $fileType = $this->getInput()->getOption(self::_OPTION_FILE_TYPE_);
         $outputFile = $this->getInput()->getOption(self::_OPTION_DESTINATION_);
         $outputMask = $this->getInput()->getOption(self::_OPTION_OUTPUT_MASK_);
