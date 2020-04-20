@@ -47,8 +47,18 @@ class Language
      */
     private $project;
 
+    /**
+     * IETF ISO639.1 format
+     * format: language : en
+     * @var integer
+     */
     const FORMAT_ISO_639_1 = 0;
 
+    /**
+     * IETF POSIX format
+     * format: language_COUNTRY: en_GB
+     * @var integer
+     */
     const FORMAT_POSIX = 1;
 
     /**
@@ -68,6 +78,7 @@ class Language
 
     /**
      * Format language code
+     * @throws Exception invalid language code
      * @param int $separator
      * @return string
      */

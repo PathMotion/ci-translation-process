@@ -13,7 +13,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use PathMotion\CI\Utils\TranslationFile;
-use Symfony\Component\Console\Input\InputArgument;
 
 class PoEditorImport extends AbstractCommand
 {
@@ -117,11 +116,23 @@ class PoEditorImport extends AbstractCommand
      */
     const _SHORT_OPTION_CONTEXT_ = 'c';
 
+    /**
+     * List of accepted/supported IETF code
+     * Key   -> input parameter
+     * Value -> related code format integer
+     * @var array <string, int>
+     */
     const _ALLOWED_FILE_NAME_CODE_ = [
-        'posix' => Language::FORMAT_POSIX,
-        'iso_639_1' => Language::FORMAT_ISO_639_1
+        'posix' => Language::FORMAT_POSIX,         // language_COUNTRY: en_GB
+        'iso_639_1' => Language::FORMAT_ISO_639_1  // language        : en
     ];
 
+    /**
+     * List of accepted/supported output file format
+     * Key   -> input parameter
+     * Value -> common file extension
+     * @var array <string, string>
+     */
     const _ALLOWED_OPTION_FILE_TYPE_ = [
         'po' => 'po',
         'pot' => 'pot',
@@ -155,7 +166,7 @@ class PoEditorImport extends AbstractCommand
      */
     protected function configure()
     {
-        $this->setDescription('Import translation files from PoEditor.com account.');
+        $this->setDescription('Import translation files from PoEditor.com project.');
 
         $this->addOption(
             self::_OPTION_DESTINATION_,
@@ -183,7 +194,7 @@ class PoEditorImport extends AbstractCommand
             self::_OPTION_FILE_TYPE_,
             self::_SHORT_OPTION_FILE_TYPE_,
             InputOption::VALUE_REQUIRED,
-            'Imported file type',
+            'Imported file type/format',
             self::_DEFAULT_FILE_TYPE_
         );
 
@@ -191,7 +202,7 @@ class PoEditorImport extends AbstractCommand
             self::_OPTION_CONTEXT_,
             self::_SHORT_OPTION_CONTEXT_,
             InputOption::VALUE_NONE,
-            'split context into several file'
+            'Export translation contexts to separate files to avoid overlapping'
         );
 
         // IETF format
@@ -199,7 +210,7 @@ class PoEditorImport extends AbstractCommand
             self::_OPTION_OUTPUT_MASK_,
             self::_SHORT_OPTION_OUTPUT_MASK_,
             InputOption::VALUE_REQUIRED,
-            'Output file mask',
+            'Output file mask. That should allow you to override destination pattern. by default it follow linux locales organization.',
             self::_DEFAULT_OUTPUT_MASK_
         );
 
@@ -207,7 +218,7 @@ class PoEditorImport extends AbstractCommand
             self::_OPTION_IETF_TAG_,
             null,
             InputOption::VALUE_REQUIRED,
-            'Language code format (IETF tag lang)',
+            'Language code format (IETF tag lang) that will be used to generate your output mask. ('.implode('|', array_keys(self::_ALLOWED_FILE_NAME_CODE_)) . ')',
             self::_DEFAULT_FILE_NAME_CODE_
         );
     }
