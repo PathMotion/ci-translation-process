@@ -1,6 +1,10 @@
 {
     "name": "pathmotion/ci-translation-process",
     "description": "Handle translation process for the CI",
+    "minimum-stability": "stable",
+    "bin": [
+        "bin/ci-translation"
+    ],
     "autoload": {
         "psr-4": {
             "PathMotion\\CI\\": "src/"
