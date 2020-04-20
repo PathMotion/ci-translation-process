@@ -87,12 +87,6 @@ class PoEditorImport extends AbstractCommand
     const _OPTION_IETF_TAG_ = 'code';
 
     /**
-     * Short command line option for file output
-     * @var string
-     */
-    const _SHORT_OPTION_IETF_TAG_ = 'c';
-
-    /**
      * Default value of command line option self::_OPTION_FILE_NAME_CODE_
      * @var string
      */
@@ -211,7 +205,7 @@ class PoEditorImport extends AbstractCommand
 
         $this->addOption(
             self::_OPTION_IETF_TAG_,
-            self::_SHORT_OPTION_IETF_TAG_,
+            null,
             InputOption::VALUE_REQUIRED,
             'Language code format (IETF tag lang)',
             self::_DEFAULT_FILE_NAME_CODE_

@@ -75,17 +75,17 @@ class Language
     {
         if (preg_match('/^([a-zA-Z]+)-([a-zA-Z]+)$/', $this->code, $matches) === 1) {
             $language = $matches[1];
-            $region = mb_strtoupper($matches[2]);
+            $country = mb_strtoupper($matches[2]);
         } else {
             $language = mb_strtolower($this->code);
-            $region = mb_strtoupper($this->code);
+            $country = mb_strtoupper($this->code);
         }
 
         if (self::FORMAT_ISO_639_1 === $format) {
             return $language;
         }
         if (self::FORMAT_POSIX === $format) {
-            return sprintf('%s%s%s', $language, '_', $region);
+            return sprintf('%s%s%s', $language, '_', $country);
         }
         throw new Exception('invalid language code format');
     }
