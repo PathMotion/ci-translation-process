@@ -62,6 +62,13 @@ class Language
     const FORMAT_POSIX = 1;
 
     /**
+     * IETF lowercase POSIX format
+     * format: language_COUNTRY: en_gb
+     * @var integer
+     */
+    const FORMAT_POSIX_LOWERCASE = 2;
+
+    /**
      * Po Editor Language constructor
      * @param stdClass $language
      * @param Project $project
@@ -97,6 +104,9 @@ class Language
         }
         if (self::FORMAT_POSIX === $format) {
             return sprintf('%s%s%s', $language, '_', $country);
+        }
+        if (self::FORMAT_POSIX_LOWERCASE === $format) {
+            return strtolower(sprintf('%s%s%s', $language, '_', $country));
         }
         throw new Exception('invalid language code format');
     }

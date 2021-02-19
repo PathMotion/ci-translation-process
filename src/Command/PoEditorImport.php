@@ -123,8 +123,9 @@ class PoEditorImport extends AbstractCommand
      * @var array <string, int>
      */
     const _ALLOWED_FILE_NAME_CODE_ = [
-        'posix' => Language::FORMAT_POSIX,         // language_COUNTRY: en_GB
-        'iso_639_1' => Language::FORMAT_ISO_639_1  // language        : en
+        'posix' => Language::FORMAT_POSIX,                     // language_COUNTRY: en_GB
+        'posix_lowercase' => Language::FORMAT_POSIX_LOWERCASE, // language_COUNTRY: en_gb
+        'iso_639_1' => Language::FORMAT_ISO_639_1              // language        : en
     ];
 
     /**
