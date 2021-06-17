@@ -1,6 +1,7 @@
 <?php
 namespace PathMotion\CI\PoEditor;
 
+use Exception;
 use PathMotion\CI\PoEditor\Exception\ApiErrorException;
 use PathMotion\CI\PoEditor\Exception\IOException;
 use PathMotion\CI\PoEditor\Exception\UnexpectedBodyResponseException;
@@ -47,6 +48,20 @@ class Language
     private $project;
 
     /**
+     * IETF ISO639.1 format
+     * format: language : en
+     * @var integer
+     */
+    const FORMAT_ISO_639_1 = 0;
+
+    /**
+     * IETF POSIX format
+     * format: language_COUNTRY: en_GB
+     * @var integer
+     */
+    const FORMAT_POSIX = 1;
+
+    /**
      * Po Editor Language constructor
      * @param stdClass $language
      * @param Project $project
@@ -63,19 +78,27 @@ class Language
 
     /**
      * Format language code
-     * @param string $separator
+     * @throws Exception invalid language code
+     * @param int $separator
      * @return string
      */
-    public function formatCode(string $separator = '-'): string
+    public function formatCode(int $format = self::FORMAT_POSIX): string
     {
         if (preg_match('/^([a-zA-Z]+)-([a-zA-Z]+)$/', $this->code, $matches) === 1) {
             $language = $matches[1];
-            $region = mb_strtoupper($matches[2]);
+            $country = mb_strtoupper($matches[2]);
         } else {
             $language = mb_strtolower($this->code);
-            $region = mb_strtoupper($this->code);
+            $country = mb_strtoupper($this->code);
         }
-        return sprintf('%s%s%s', $language, $separator, $region);
+
+        if (self::FORMAT_ISO_639_1 === $format) {
+            return $language;
+        }
+        if (self::FORMAT_POSIX === $format) {
+            return sprintf('%s%s%s', $language, '_', $country);
+        }
+        throw new Exception('invalid language code format');
     }
 
     /**
