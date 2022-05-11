@@ -124,7 +124,8 @@ class PoEditorImport extends AbstractCommand
      */
     const _ALLOWED_FILE_NAME_CODE_ = [
         'posix' => Language::FORMAT_POSIX,         // language_COUNTRY: en_GB
-        'iso_639_1' => Language::FORMAT_ISO_639_1  // language        : en
+        'iso_639_1' => Language::FORMAT_ISO_639_1, // language        : en
+        'pathmotion_iso' => Language::PATHMOTION_FORMAT_ISO, // language        : en-GB
     ];
 
     /**
