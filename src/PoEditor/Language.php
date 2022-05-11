@@ -62,6 +62,13 @@ class Language
     const FORMAT_POSIX = 1;
 
     /**
+     * Pathmotion ISO format
+     * format: language_COUNTRY: en-GB
+     * @var integer
+     */
+    const PATHMOTION_FORMAT_ISO = 3;
+
+    /**
      * Po Editor Language constructor
      * @param stdClass $language
      * @param Project $project
@@ -97,6 +104,9 @@ class Language
         }
         if (self::FORMAT_POSIX === $format) {
             return sprintf('%s%s%s', $language, '_', $country);
+        }
+        if (self::PATHMOTION_FORMAT_ISO === $format) {
+            return sprintf('%s%s%s', $language, '-', $country);
         }
         throw new Exception('invalid language code format');
     }
